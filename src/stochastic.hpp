@@ -185,7 +185,6 @@ class AbstractSimulation : public Simulation
     int bindingThreshold;
     
     std::mt19937 gen;
-    int numSteps;
     bool reportNonDeterminism;
 
     void addFrontier(Polyomino polyomino);

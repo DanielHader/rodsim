@@ -13,8 +13,18 @@ Assembly::Assembly(const std::string &filename)
     this->reportNonDeterminism = false;
     this->rngSeed = -1;
 
+	this->minBinding = -1;
+	int temp_min_binding = -1;
     this->parseConfFile(filename);
+	if (this->minBinding > -1) {
+		temp_min_binding = this->minBinding;
+	}
+	
+	// use the min_binding value in the config file over the value in the system file
     this->parseSystemFile(this->confPath + this->system);
+	if (temp_min_binding != -1) {
+		this->minBinding = temp_min_binding;
+	}
 
     std::cout << "found " << this->polyominoTypes.size() << " polyomino types" << std::endl << std::endl;
 
@@ -136,6 +146,8 @@ int Assembly::parseConfParam(const std::string &param, const std::string &value)
 		this->numSteps = std::stoi(value);
     } else if (param == "max_attachments") {
 		this->maxAttachments = std::stoi(value);
+    } else if (param == "min_binding") {
+	this->minBinding = std::stoi(value);
     } else if (param == "output_interval") {
 		this->outputInterval = std::stoi(value);
     } else if (param == "system") {

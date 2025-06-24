@@ -308,6 +308,7 @@ bool AbstractSimulation::step()
 
 void AbstractSimulation::operator()()
 {
+	std::cout << "Beginning abstract simulation with binding threshold " << this->bindingThreshold << " and maximum steps " << this->numSteps << std::endl;
     for (int i = 1; i <= this->numSteps; i++)
     {
 	if(!this->step())
@@ -552,6 +553,8 @@ void KineticSimulation::step()
 
 void KineticSimulation::operator()()
 {
+	std::cout << "Beginning kinetic simulation with minimum binding threshold " << this->minBinding << ", maximum steps " << this->numSteps << ", and maximum attachments " << this->maxAttachments << std::endl;
+	
     std::string note = "";
     int i;
 
