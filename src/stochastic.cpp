@@ -159,9 +159,8 @@ void AbstractSimulation::removeFrontier(Polyomino polyomino)
 	    }
 	}
     }
-    else
-    {
-	std::cout << "Attempting to remove non-existing frontier poly" << std::endl;
+    else {
+		std::cout << "Attempting to remove non-existing frontier poly" << std::endl;
     }
 }
 
@@ -186,11 +185,11 @@ void AbstractSimulation::addPolyomino(Polyomino polyomino, bool seed)
     Shape shape(sType, polyomino.offset);
 	
     if (locationMap.count(shape)) {
-	std::string errString = "attempting to add polyomino \"" +
-	    polyomino.type->name + "\" in occupied location " +
-	    polyomino.offset.toString();
-		
-	throw std::runtime_error(errString);
+		std::string errString = "attempting to add polyomino \"" +
+			polyomino.type->name + "\" in occupied location " +
+			polyomino.offset.toString();
+			
+		throw std::runtime_error(errString);
     }
 
     int strength = strengthMap[polyomino];
@@ -205,34 +204,34 @@ void AbstractSimulation::addPolyomino(Polyomino polyomino, bool seed)
     // else eventSet->addDetachmentEvent(polyomino, strength);
 
     for (auto pair : this->sharedData->potentialBindingList[id1]) {
-	PolyominoType *pType = pair.first;
-	ShapeType *nbrType = this->sharedData->polyominoShapes[pType->id];
+		PolyominoType *pType = pair.first;
+		ShapeType *nbrType = this->sharedData->polyominoShapes[pType->id];
 
-	Vec3 offset = pair.second;
-	Shape nbr(nbrType, offset + polyomino.offset);
+		Vec3 offset = pair.second;
+		Shape nbr(nbrType, offset + polyomino.offset);
 
-	// ignore neighbors that don't satisfy dim restrictions
-	if (nbr.offset < dimRestriction.min or nbr.offset >= dimRestriction.max)
-	    continue;
+		// ignore neighbors that don't satisfy dim restrictions
+		if (!(nbr.offset >= dimRestriction.min) or !(nbr.offset < dimRestriction.max))
+			continue;
 
-	// polyomino already exists here, skip
-	if (locationMap.count(nbr))
-	    continue;
+		// polyomino already exists here, skip
+		if (locationMap.count(nbr))
+			continue;
 
-	Polyomino polyominoNbr(pType, nbr.offset);
-	int id2 = pType->id;
+		Polyomino polyominoNbr(pType, nbr.offset);
+		int id2 = pType->id;
 
-	int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
-	
-	int &strengthNbr = strengthMap[polyominoNbr];
-	int oldStrengthNbr = strengthNbr;
-	strengthNbr += relStrength;
+		int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
+		
+		int &strengthNbr = strengthMap[polyominoNbr];
+		int oldStrengthNbr = strengthNbr;
+		strengthNbr += relStrength;
 
-	if (overlappedMap[nbr] == 0 and
-	    oldStrengthNbr < this->bindingThreshold and 
-	    strengthNbr >= this->bindingThreshold) {
-	    addFrontier(polyominoNbr);
-	}
+		if (overlappedMap[nbr] == 0 and
+			oldStrengthNbr < this->bindingThreshold and 
+			strengthNbr >= this->bindingThreshold) {
+			addFrontier(polyominoNbr);
+		}
     }
 
     /*
@@ -507,20 +506,19 @@ KineticSimulation::KineticSimulation(PrecomputedMaps *sharedData,
     this->sharedData = sharedData;
 
     int maxStrength = 0;
-    for (PolyominoType *type : sharedData->polyominoTypes)
-    {
-	// std::cout << type->name << " " << std::endl;
-	int strength = 0;
-	for (const Block &block : type->blocks)
-	    for (const Domain &domain : block.domains)
-		strength += domain.strength;
+    for (PolyominoType *type : sharedData->polyominoTypes) {
+		// std::cout << type->name << " " << std::endl;
+		int strength = 0;
+		for (const Block &block : type->blocks)
+			for (const Domain &domain : block.domains)
+				strength += domain.strength;
 
-	if (maxStrength < strength)
-	    maxStrength = strength;
+		if (maxStrength < strength)
+			maxStrength = strength;
     }
 
     if (this->rngSeed == -1 or this->threadId != 0) {
-	this->rngSeed = std::chrono::system_clock::now().time_since_epoch().count();
+		this->rngSeed = std::chrono::system_clock::now().time_since_epoch().count();
     }
 
     this->eventSet = new StochasticEventSet(sharedData->polyominoTypes, maxStrength, Gmc, Gse, kf);
@@ -543,12 +541,11 @@ KineticSimulation::KineticSimulation(PrecomputedMaps *sharedData,
 void KineticSimulation::step()
 {
     StochasticEvent event = eventSet->sample();
-    if (event.type == ATTACHMENT) {
-	addPolyomino(event.polyomino);
+	if (event.type == ATTACHMENT) {
+		addPolyomino(event.polyomino);
     } else {
-	removePolyomino(event.polyomino);
+		removePolyomino(event.polyomino);
     }
-    std::cout << "C" << std::endl;
     this->time += event.dt;
     this->steps += 1;
 }
@@ -622,51 +619,50 @@ void KineticSimulation::initSystemXML()
 
     pugi::xml_node typesNode = sysNode.append_child("PolyominoTypes");
     for (const PolyominoType *type : this->sharedData->polyominoTypes)
-    {
-	pugi::xml_node polyominoNode = typesNode.append_child("PolyominoType");
-		
-	pugi::xml_node nameNode = polyominoNode.append_child("name");
-	nameNode.append_child(pugi::node_pcdata).set_value(type->name.c_str());
-
-	pugi::xml_node colorNode = polyominoNode.append_child("color");
-	colorNode.append_child(pugi::node_pcdata).set_value(type->color.c_str());
-
-	pugi::xml_node concNode = polyominoNode.append_child("concentration");
-	concNode.append_child(pugi::node_pcdata).set_value(std::to_string(type->concentration).c_str());
-
-	pugi::xml_node blocksNode = polyominoNode.append_child("blocks");
-	for (const Block &block : type->blocks)
 	{
-	    pugi::xml_node blockNode = blocksNode.append_child("block");
+		pugi::xml_node polyominoNode = typesNode.append_child("PolyominoType");
+			
+		pugi::xml_node nameNode = polyominoNode.append_child("name");
+		nameNode.append_child(pugi::node_pcdata).set_value(type->name.c_str());
 
-	    pugi::xml_node coordsNode = blockNode.append_child("coords");
-	    coordsNode.append_child(pugi::node_pcdata).set_value(block.coord.toString().c_str());
+		pugi::xml_node colorNode = polyominoNode.append_child("color");
+		colorNode.append_child(pugi::node_pcdata).set_value(type->color.c_str());
 
-	    pugi::xml_node domainsNode = blockNode.append_child("domains");
-	    for (const Domain &domain : block.domains)
-	    {
-		pugi::xml_node domainNode = domainsNode.append_child("domain");
+		pugi::xml_node concNode = polyominoNode.append_child("concentration");
+		concNode.append_child(pugi::node_pcdata).set_value(std::to_string(type->concentration).c_str());
 
-		pugi::xml_node labelNode = domainNode.append_child("label");
-		labelNode.append_child(pugi::node_pcdata).set_value(domain.label.c_str());
-
-		pugi::xml_node dirNode = domainNode.append_child("direction");
-		char dirStr[2] = " ";
-		switch(domain.direction)
+		pugi::xml_node blocksNode = polyominoNode.append_child("blocks");
+		for (const Block &block : type->blocks)
 		{
-		case NORTH: dirStr[0] = 'N'; break;
-		case SOUTH: dirStr[0] = 'S'; break;
-		case EAST:  dirStr[0] = 'E'; break;
-		case WEST:  dirStr[0] = 'W'; break;
-		case UP:    dirStr[0] = 'U'; break;
-		case DOWN:  dirStr[0] = 'D'; break;
-		}
-		dirNode.append_child(pugi::node_pcdata).set_value(dirStr);
+			pugi::xml_node blockNode = blocksNode.append_child("block");
 
-		pugi::xml_node strengthNode = domainNode.append_child("strength");
-		strengthNode.append_child(pugi::node_pcdata).set_value(std::to_string(domain.strength).c_str());
-	    }
-	}
+			pugi::xml_node coordsNode = blockNode.append_child("coords");
+			coordsNode.append_child(pugi::node_pcdata).set_value(block.coord.toString().c_str());
+
+			pugi::xml_node domainsNode = blockNode.append_child("domains");
+			for (const Domain &domain : block.domains)
+			{
+				pugi::xml_node domainNode = domainsNode.append_child("domain");
+
+				pugi::xml_node labelNode = domainNode.append_child("label");
+				labelNode.append_child(pugi::node_pcdata).set_value(domain.label.c_str());
+
+				pugi::xml_node dirNode = domainNode.append_child("direction");
+				char dirStr[2] = " ";
+				switch(domain.direction) {
+					case NORTH: dirStr[0] = 'N'; break;
+					case SOUTH: dirStr[0] = 'S'; break;
+					case EAST:  dirStr[0] = 'E'; break;
+					case WEST:  dirStr[0] = 'W'; break;
+					case UP:    dirStr[0] = 'U'; break;
+					case DOWN:  dirStr[0] = 'D'; break;
+				}
+				dirNode.append_child(pugi::node_pcdata).set_value(dirStr);
+
+				pugi::xml_node strengthNode = domainNode.append_child("strength");
+				strengthNode.append_child(pugi::node_pcdata).set_value(std::to_string(domain.strength).c_str());
+			}
+		}
     }
 
     pugi::xml_node seedNode = sysNode.append_child("seed");
@@ -674,12 +670,12 @@ void KineticSimulation::initSystemXML()
     pugi::xml_node seedPolysNode = seedNode.append_child("Polyominoes");
     for (const Polyomino &poly : this->seedSet)
     {
-	pugi::xml_node polyNode = seedPolysNode.append_child("Polyomino");
-	pugi::xml_node typeNode = polyNode.append_child("PolyominoType");
-	typeNode.append_child(pugi::node_pcdata).set_value(poly.type->name.c_str());
+		pugi::xml_node polyNode = seedPolysNode.append_child("Polyomino");
+		pugi::xml_node typeNode = polyNode.append_child("PolyominoType");
+		typeNode.append_child(pugi::node_pcdata).set_value(poly.type->name.c_str());
 
-	pugi::xml_node transNode = polyNode.append_child("translation");
-	transNode.append_child(pugi::node_pcdata).set_value(poly.offset.toString().c_str());
+		pugi::xml_node transNode = polyNode.append_child("translation");
+		transNode.append_child(pugi::node_pcdata).set_value(poly.offset.toString().c_str());
     }
 
     pugi::xml_node assemblyNode = sysNode.append_child("assembly");
@@ -687,25 +683,25 @@ void KineticSimulation::initSystemXML()
     pugi::xml_node assemblyPolysNode = assemblyNode.append_child("Polyominoes");
     for (const auto &kv : this->locationMap)
     {
-	const Polyomino &poly = kv.second;
-	pugi::xml_node polyNode = assemblyPolysNode.append_child("Polyomino");
-	pugi::xml_node typeNode = polyNode.append_child("PolyominoType");
-	typeNode.append_child(pugi::node_pcdata).set_value(poly.type->name.c_str());
+		const Polyomino &poly = kv.second;
+		pugi::xml_node polyNode = assemblyPolysNode.append_child("Polyomino");
+		pugi::xml_node typeNode = polyNode.append_child("PolyominoType");
+		typeNode.append_child(pugi::node_pcdata).set_value(poly.type->name.c_str());
 
-	pugi::xml_node transNode = polyNode.append_child("translation");
-	transNode.append_child(pugi::node_pcdata).set_value(poly.offset.toString().c_str());
+		pugi::xml_node transNode = polyNode.append_child("translation");
+		transNode.append_child(pugi::node_pcdata).set_value(poly.offset.toString().c_str());
 
-	pugi::xml_node polyStepNode = polyNode.append_child("stepAdded");
-	polyStepNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.stepAdded).c_str());
+		pugi::xml_node polyStepNode = polyNode.append_child("stepAdded");
+		polyStepNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.stepAdded).c_str());
 
-	pugi::xml_node polyTimeNode = polyNode.append_child("timeAdded");
-	polyTimeNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.timeAdded).c_str());
+		pugi::xml_node polyTimeNode = polyNode.append_child("timeAdded");
+		polyTimeNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.timeAdded).c_str());
 
-	pugi::xml_node polyBindNode = polyNode.append_child("bindStrength");
-	polyBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.currentBindStrength).c_str());
+		pugi::xml_node polyBindNode = polyNode.append_child("bindStrength");
+		polyBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.currentBindStrength).c_str());
 
-	pugi::xml_node polyInitialBindNode = polyNode.append_child("initialBindStrength");
-	polyInitialBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.initialBindStrength).c_str());
+		pugi::xml_node polyInitialBindNode = polyNode.append_child("initialBindStrength");
+		polyInitialBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.initialBindStrength).c_str());
     }
 }
 
@@ -730,27 +726,26 @@ void KineticSimulation::writeSystemXML(std::string note)
     noteNode.append_child(pugi::node_pcdata).set_value(note.c_str());
 
     pugi::xml_node assemblyPolysNode = assemblyNode.append_child("Polyominoes");
-    for (const auto &kv : this->locationMap)
-    {
-	const Polyomino &poly = kv.second;
-	pugi::xml_node polyNode = assemblyPolysNode.append_child("Polyomino");
-	pugi::xml_node typeNode = polyNode.append_child("PolyominoType");
-	typeNode.append_child(pugi::node_pcdata).set_value(poly.type->name.c_str());
+    for (const auto &kv : this->locationMap) {
+		const Polyomino &poly = kv.second;
+		pugi::xml_node polyNode = assemblyPolysNode.append_child("Polyomino");
+		pugi::xml_node typeNode = polyNode.append_child("PolyominoType");
+		typeNode.append_child(pugi::node_pcdata).set_value(poly.type->name.c_str());
 
-	pugi::xml_node transNode = polyNode.append_child("translation");
-	transNode.append_child(pugi::node_pcdata).set_value(poly.offset.toString().c_str());
+		pugi::xml_node transNode = polyNode.append_child("translation");
+		transNode.append_child(pugi::node_pcdata).set_value(poly.offset.toString().c_str());
 
-	pugi::xml_node polyStepNode = polyNode.append_child("stepAdded");
-	polyStepNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.stepAdded).c_str());
+		pugi::xml_node polyStepNode = polyNode.append_child("stepAdded");
+		polyStepNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.stepAdded).c_str());
 
-	pugi::xml_node polyTimeNode = polyNode.append_child("timeAdded");
-	polyTimeNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.timeAdded).c_str());
+		pugi::xml_node polyTimeNode = polyNode.append_child("timeAdded");
+		polyTimeNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.timeAdded).c_str());
 
-	pugi::xml_node polyBindNode = polyNode.append_child("bindStrength");
-	polyBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.currentBindStrength).c_str());
+		pugi::xml_node polyBindNode = polyNode.append_child("bindStrength");
+		polyBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.currentBindStrength).c_str());
 
-	pugi::xml_node polyInitialBindNode = polyNode.append_child("initialBindStrength");
-	polyInitialBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.initialBindStrength).c_str());
+		pugi::xml_node polyInitialBindNode = polyNode.append_child("initialBindStrength");
+		polyInitialBindNode.append_child(pugi::node_pcdata).set_value(std::to_string(poly.initialBindStrength).c_str());
     }
 
     std::string filename = this->outputDir + this->outputName;
@@ -771,11 +766,11 @@ void KineticSimulation::addPolyomino(Polyomino polyomino, bool seed)
     Shape shape(sType, polyomino.offset);
 
     if (locationMap.count(shape)) {
-	std::string errString = "attempting to add polyomino \"" +
-	    polyomino.type->name + "\" in occupied location " +
-	    polyomino.offset.toString();
-		
-	throw std::runtime_error(errString);
+		std::string errString = "attempting to add polyomino \"" +
+			polyomino.type->name + "\" in occupied location " +
+			polyomino.offset.toString();
+			
+		throw std::runtime_error(errString);
     }
 
     int strength = strengthMap[polyomino];
@@ -792,101 +787,100 @@ void KineticSimulation::addPolyomino(Polyomino polyomino, bool seed)
     else eventSet->addDetachmentEvent(polyomino, strength);
     
     if (this->minBinding > 0) {
-	for (auto pair : this->sharedData->potentialBindingList[id1]) {
-	    PolyominoType *pType = pair.first;
-	    ShapeType *nbrType = this->sharedData->polyominoShapes[pType->id];
+		for (auto pair : this->sharedData->potentialBindingList[id1]) {
+			PolyominoType *pType = pair.first;
+			ShapeType *nbrType = this->sharedData->polyominoShapes[pType->id];
 
-	    Vec3 offset = pair.second;
-	    Shape nbr(nbrType, offset + polyomino.offset);
+			Vec3 offset = pair.second;
+			Shape nbr(nbrType, offset + polyomino.offset);
 
-	    // ignore neighbors that don't satisfy dim restrictions
-	    if (nbr.offset < dimRestriction.min or nbr.offset >= dimRestriction.max)
-		continue;
-	    
-	    Polyomino existing = polyomino;
-	    if (locationMap.count(nbr))
-		existing = locationMap[nbr];
-	    
-	    Polyomino polyominoNbr(pType, nbr.offset);
-	    int id2 = pType->id;
+			// ignore neighbors that don't satisfy dim restrictions
+			if (!(nbr.offset >= dimRestriction.min) or !(nbr.offset < dimRestriction.max))
+				continue;
+			
+			Polyomino existing = polyomino;
+			if (locationMap.count(nbr))
+			existing = locationMap[nbr];
+			
+			Polyomino polyominoNbr(pType, nbr.offset);
+			int id2 = pType->id;
 
-	    int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
-		
-	    int &strengthNbr = strengthMap[polyominoNbr];
-	    int oldStrengthNbr = strengthNbr;
-	    strengthNbr += relStrength;
+			int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
+			
+			int &strengthNbr = strengthMap[polyominoNbr];
+			int oldStrengthNbr = strengthNbr;
+			strengthNbr += relStrength;
 
-	    if (polyominoNbr == existing and seedSet.count(polyominoNbr) == 0) {
-		locationMap[nbr].currentBindStrength = strengthNbr;
+			if (polyominoNbr == existing and seedSet.count(polyominoNbr) == 0) {
+				locationMap[nbr].currentBindStrength = strengthNbr;
 
-		eventSet->removeDetachmentEvent(polyominoNbr, oldStrengthNbr);
-		eventSet->addDetachmentEvent(polyominoNbr, strengthNbr);
-	    } else {
-		if (overlappedMap[nbr] == 0 and
-		    (minBinding == 0 or oldStrengthNbr < minBinding) and
-		    strengthNbr >= minBinding) {
-		    eventSet->addAttachmentEvent(polyominoNbr);
+				eventSet->removeDetachmentEvent(polyominoNbr, oldStrengthNbr);
+				eventSet->addDetachmentEvent(polyominoNbr, strengthNbr);
+			} else {
+				if (overlappedMap[nbr] == 0 and
+					(minBinding == 0 or oldStrengthNbr < minBinding) and
+					strengthNbr >= minBinding) {
+					eventSet->addAttachmentEvent(polyominoNbr);
+				}
+			}
 		}
-	    }
-	}
     } else {
-	for (Shape nbr : this->sharedData->neighborLists[sType->id]) {
-	    Vec3 offset = nbr.offset;
-	    nbr.offset += polyomino.offset;
+		for (Shape nbr : this->sharedData->neighborLists[sType->id]) {
+			Vec3 offset = nbr.offset;
+			nbr.offset += polyomino.offset;
 
-	    // ignore neighbors that don't satisfy dim restrictions
-	    if (nbr.offset < dimRestriction.min or nbr.offset >= dimRestriction.max)
-		continue;
+			// ignore neighbors that don't satisfy dim restrictions
+			if (!(nbr.offset >= dimRestriction.min) or !(nbr.offset < dimRestriction.max))
+				continue;
 
-	    Polyomino existing = polyomino;
-	    if (locationMap.count(nbr))
-		existing = locationMap[nbr];
-		
-	    for (PolyominoType *pType : nbr.type->polyominoTypes) {
+			Polyomino existing = polyomino;
+			if (locationMap.count(nbr))
+			existing = locationMap[nbr];
+			
+			for (PolyominoType *pType : nbr.type->polyominoTypes) {
+				Polyomino polyominoNbr(pType, nbr.offset);
 
-		Polyomino polyominoNbr(pType, nbr.offset);
+				int id2 = pType->id;
+				//int relStrength = this->sharedData->bindingMap[id1][id2][offset];
+				int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
+				
+				int &strengthNbr = strengthMap[polyominoNbr];
+				int oldStrengthNbr = strengthNbr;
+				strengthNbr += relStrength;
 
-		int id2 = pType->id;
-		//int relStrength = this->sharedData->bindingMap[id1][id2][offset];
-		int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
-		
-		int &strengthNbr = strengthMap[polyominoNbr];
-		int oldStrengthNbr = strengthNbr;
-		strengthNbr += relStrength;
+				if (polyominoNbr == existing and seedSet.count(polyominoNbr) == 0) {
+					locationMap[nbr].currentBindStrength = strengthNbr;
 
-		if (polyominoNbr == existing and seedSet.count(polyominoNbr) == 0) {
-		    locationMap[nbr].currentBindStrength = strengthNbr;
-
-		    eventSet->removeDetachmentEvent(polyominoNbr, oldStrengthNbr);
-		    eventSet->addDetachmentEvent(polyominoNbr, strengthNbr);
-		} else {
-		    if (overlappedMap[nbr] == 0 and
-			(minBinding == 0 or oldStrengthNbr < minBinding) and
-			strengthNbr >= minBinding) {
-			eventSet->addAttachmentEvent(polyominoNbr);
-		    }
+					eventSet->removeDetachmentEvent(polyominoNbr, oldStrengthNbr);
+					eventSet->addDetachmentEvent(polyominoNbr, strengthNbr);
+				} else {
+					if (overlappedMap[nbr] == 0 and
+					(minBinding == 0 or oldStrengthNbr < minBinding) and
+					strengthNbr >= minBinding) {
+					eventSet->addAttachmentEvent(polyominoNbr);
+					}
+				}
+			}
 		}
-	    }
-	}
     }
 
     // remove overlapping attachment events
     for (Shape ovr : this->sharedData->overlapLists[sType->id]) {
-	ovr.offset += polyomino.offset;
+		ovr.offset += polyomino.offset;
 
-	if (ovr.offset < dimRestriction.min or ovr.offset >= dimRestriction.max)
-	    continue;
-		
-	int overlappedOvr = ++(overlappedMap[ovr]);
+		if (!(ovr.offset >= dimRestriction.min) or !(ovr.offset < dimRestriction.max))
+			continue;
+			
+		int overlappedOvr = ++(overlappedMap[ovr]);
 
-	for (PolyominoType *pType : ovr.type->polyominoTypes) {
-	    Polyomino polyominoOvr(pType, ovr.offset);
-	    int strengthOvr = strengthMap[polyominoOvr];
-	    if (strengthOvr >= minBinding and overlappedOvr == 1) {
-		// std::cout << polyominoOvr.type->name << " " << polyominoOvr.offset.toString() << std::endl;
-		eventSet->removeAttachmentEvent(polyominoOvr);
-	    }
-	}
+		for (PolyominoType *pType : ovr.type->polyominoTypes) {
+			Polyomino polyominoOvr(pType, ovr.offset);
+			int strengthOvr = strengthMap[polyominoOvr];
+			if (strengthOvr >= minBinding and overlappedOvr == 1) {
+			// std::cout << polyominoOvr.type->name << " " << polyominoOvr.offset.toString() << std::endl;
+			eventSet->removeAttachmentEvent(polyominoOvr);
+			}
+		}
     }
 }
 
@@ -898,10 +892,10 @@ void KineticSimulation::removePolyomino(Polyomino polyomino)
     Shape shape(sType, polyomino.offset);
 	
     if (!locationMap.count(shape)) {
-	std::string errString = "attempting to remove polyomino \"" +
-	    polyomino.type->name + "\" from unoccupied location " +
-	    polyomino.offset.toString();
-	throw std::runtime_error(errString);
+		std::string errString = "attempting to remove polyomino \"" +
+			polyomino.type->name + "\" from unoccupied location " +
+			polyomino.offset.toString();
+		throw std::runtime_error(errString);
     }
 
     locationMap.erase(shape);
@@ -917,8 +911,8 @@ void KineticSimulation::removePolyomino(Polyomino polyomino)
 	    Shape nbr(nbrType, offset + polyomino.offset);
 
 	    // ignore neighbors that don't satisfy dim restrictions
-	    if (nbr.offset < dimRestriction.min or nbr.offset >= dimRestriction.max)
-		continue;
+	    if (!(nbr.offset >= dimRestriction.min) or !(nbr.offset < dimRestriction.max))
+			continue;
 	    
 	    Polyomino existing = polyomino;
 	    if (locationMap.count(nbr))
@@ -937,66 +931,66 @@ void KineticSimulation::removePolyomino(Polyomino polyomino)
 		eventSet->removeDetachmentEvent(polyominoNbr, oldStrengthNbr);
 		eventSet->addDetachmentEvent(polyominoNbr, strengthNbr);
 	    } else {
-		if (overlappedMap[nbr] == 0 and
-		    oldStrengthNbr >= minBinding and
-		    strengthNbr < minBinding) {
-		    eventSet->removeAttachmentEvent(polyominoNbr);
-		}
+			if (overlappedMap[nbr] == 0 and
+				oldStrengthNbr >= minBinding and
+				strengthNbr < minBinding) {
+				eventSet->removeAttachmentEvent(polyominoNbr);
+			}
 	    }
 	}
     } else {
-	for (Shape nbr : this->sharedData->neighborLists[sType->id]) {
-	    Vec3 offset = nbr.offset;
-	    nbr.offset += polyomino.offset;
+		for (Shape nbr : this->sharedData->neighborLists[sType->id]) {
+			Vec3 offset = nbr.offset;
+			nbr.offset += polyomino.offset;
 
-	    // ignore neighbors that don't satisfy dim restrictions
-	    if (nbr.offset < dimRestriction.min or nbr.offset >= dimRestriction.max)
-		continue;
+			// ignore neighbors that don't satisfy dim restrictions
+			if (!(nbr.offset >= dimRestriction.min) or !(nbr.offset < dimRestriction.max))
+				continue;
 
-	    Polyomino existing = polyomino;
-	    if (locationMap.count(nbr))
-		existing = locationMap[nbr];
-		
-	    for (PolyominoType *pType : nbr.type->polyominoTypes) {
-		Polyomino polyominoNbr(pType, nbr.offset);
+			Polyomino existing = polyomino;
+			if (locationMap.count(nbr))
+			existing = locationMap[nbr];
+			
+			for (PolyominoType *pType : nbr.type->polyominoTypes) {
+				Polyomino polyominoNbr(pType, nbr.offset);
 
-		int id2 = pType->id;
-		//int relStrength = this->sharedData->bindingMap[id1][id2][offset];
-		int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
-	    
+				int id2 = pType->id;
+				//int relStrength = this->sharedData->bindingMap[id1][id2][offset];
+				int relStrength = this->sharedData->getBinding(polyomino.type, pType, offset);
+				
 
-		int &strengthNbr = strengthMap[polyominoNbr];
-		int oldStrengthNbr = strengthNbr;
-		strengthNbr -= relStrength;
+				int &strengthNbr = strengthMap[polyominoNbr];
+				int oldStrengthNbr = strengthNbr;
+				strengthNbr -= relStrength;
 
-		if (polyominoNbr == existing and seedSet.count(polyominoNbr) == 0) {
-		    eventSet->removeDetachmentEvent(polyominoNbr, oldStrengthNbr);
-		    eventSet->addDetachmentEvent(polyominoNbr, strengthNbr);
-		} else {
-		    if (overlappedMap[nbr] == 0 and
-			oldStrengthNbr >= minBinding and
-			strengthNbr < minBinding) {
-			eventSet->removeAttachmentEvent(polyominoNbr);
-		    }
+				if (polyominoNbr == existing and seedSet.count(polyominoNbr) == 0) {
+					eventSet->removeDetachmentEvent(polyominoNbr, oldStrengthNbr);
+					eventSet->addDetachmentEvent(polyominoNbr, strengthNbr);
+				} else {
+					if (overlappedMap[nbr] == 0 and
+						oldStrengthNbr >= minBinding and
+						strengthNbr < minBinding) {
+						eventSet->removeAttachmentEvent(polyominoNbr);
+					}
+				}
+			}
 		}
-	    }
-	}
     }
 
     for (Shape ovr : this->sharedData->overlapLists[sType->id]) {
-	ovr.offset += polyomino.offset;
+		ovr.offset += polyomino.offset;
 
-	if (ovr.offset < dimRestriction.min or ovr.offset >= dimRestriction.max)
-	    continue;
-		
-	int overlappedOvr = --(overlappedMap[ovr]);
+		if (!(ovr.offset >= dimRestriction.min) or !(ovr.offset < dimRestriction.max))
+			continue;
+			
+		int overlappedOvr = --(overlappedMap[ovr]);
 
-	for (PolyominoType *pType : ovr.type->polyominoTypes) {
-	    Polyomino polyominoOvr(pType, ovr.offset);
-	    int strengthOvr = strengthMap[polyominoOvr];
-	    if (strengthOvr >= minBinding and overlappedOvr == 0) {
-		eventSet->addAttachmentEvent(polyominoOvr);
-	    }
-	}
+		for (PolyominoType *pType : ovr.type->polyominoTypes) {
+			Polyomino polyominoOvr(pType, ovr.offset);
+			int strengthOvr = strengthMap[polyominoOvr];
+			if (strengthOvr >= minBinding and overlappedOvr == 0) {
+				eventSet->addAttachmentEvent(polyominoOvr);
+			}
+		}
     }
 }

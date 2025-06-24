@@ -10,8 +10,7 @@
 #include "stochastic.hpp"
 #include "pugixml.hpp"
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
+#include <regex>
 
 #define SIM_ABSTRACT 1
 #define SIM_KINETIC 0
@@ -76,6 +75,7 @@ private:
     void parseSystemFile(const std::string &filename);
     void writeSystemFile(const std::string &filename);
 
+    void parseDimRestrictions(const std::string &s);
     void parsePolyominoType(pugi::xml_node);
     Vec3 parseCoord(const char*);
     int parseDirection(const char*);

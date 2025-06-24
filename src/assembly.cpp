@@ -53,50 +53,48 @@ void Assembly::run()
 
     if (this->simulationType == SIM_KINETIC)
     {
-	SimParams simParams;
-	simParams.Gmc = this->Gmc;
-	simParams.Gse = this->Gse;
-	simParams.kf = this->kf;
-	simParams.dimRestrictions = this->dimRestriction;
-	simParams.minBinding = this->minBinding;
-	simParams.outputInterval = this->outputInterval;
-	simParams.outputDir = filename;
-	simParams.outputName = this->outputName;
-	simParams.numSteps = this->numSteps;
-	simParams.maxAttachments = this->maxAttachments;
-	simParams.rngSeed = this->rngSeed;
+		SimParams simParams;
+		simParams.Gmc = this->Gmc;
+		simParams.Gse = this->Gse;
+		simParams.kf = this->kf;
+		simParams.dimRestrictions = this->dimRestriction;
+		simParams.minBinding = this->minBinding;
+		simParams.outputInterval = this->outputInterval;
+		simParams.outputDir = filename;
+		simParams.outputName = this->outputName;
+		simParams.numSteps = this->numSteps;
+		simParams.maxAttachments = this->maxAttachments;
+		simParams.rngSeed = this->rngSeed;
 
-	std::vector<KineticSimulation> sims;
-	for (int i = 0; i < this->ensembleSize; i++)
-	{
-	    simParams.threadId = i;
+		std::vector<KineticSimulation> sims;
+		for (int i = 0; i < this->ensembleSize; i++)
+		{
+			simParams.threadId = i;
 
-	    sims.push_back(KineticSimulation(this->sharedData, this->seedPolyominoes, this->assemblyPolyominoes, simParams));
-	    threads.push_back(std::thread(sims[i]));
-	}
-    }
-    else
-    {
-	SimParams simParams;
-	simParams.bindingThreshold = this->bindingThreshold;
-	simParams.dimRestrictions = this->dimRestriction;
-	simParams.minBinding = this->minBinding;
-	simParams.outputInterval = this->outputInterval;
-	simParams.outputDir = filename;
-	simParams.outputName = this->outputName;
-	simParams.numSteps = this->numSteps;
-	simParams.reportNonDeterminism = this->reportNonDeterminism;
-	simParams.rngSeed = this->rngSeed;
+			sims.push_back(KineticSimulation(this->sharedData, this->seedPolyominoes, this->assemblyPolyominoes, simParams));
+			threads.push_back(std::thread(sims[i]));
+		}
+    } else {
+		SimParams simParams;
+		simParams.bindingThreshold = this->bindingThreshold;
+		simParams.dimRestrictions = this->dimRestriction;
+		simParams.minBinding = this->minBinding;
+		simParams.outputInterval = this->outputInterval;
+		simParams.outputDir = filename;
+		simParams.outputName = this->outputName;
+		simParams.numSteps = this->numSteps;
+		simParams.reportNonDeterminism = this->reportNonDeterminism;
+		simParams.rngSeed = this->rngSeed;
 
-	std::vector<AbstractSimulation> sims;
-	for (int i = 0; i < this->ensembleSize; i++)
-	{
-	    simParams.threadId = i;
+		std::vector<AbstractSimulation> sims;
+		for (int i = 0; i < this->ensembleSize; i++)
+		{
+			simParams.threadId = i;
 
-	    sims.push_back(AbstractSimulation(this->sharedData, this->seedPolyominoes, this->assemblyPolyominoes, simParams));
+			sims.push_back(AbstractSimulation(this->sharedData, this->seedPolyominoes, this->assemblyPolyominoes, simParams));
 
-	    threads.push_back(std::thread(sims[i]));
-	}
+			threads.push_back(std::thread(sims[i]));
+		}
     }
 
     for (std::thread &thread : threads)
@@ -115,65 +113,62 @@ void Assembly::parseConfFile(const std::string &filename)
     this->confPath = "";
     std::size_t pos = filename.find_last_of("/");
     if (pos != std::string::npos)
-	this->confPath = filename.substr(0, pos+1);
+		this->confPath = filename.substr(0, pos+1);
 	
     std::string line;
     std::string param;
     std::string value;
     while (std::getline(confStream, line)) {
-	pos = line.find("=");
+		pos = line.find("=");
 
-	if (pos != std::string::npos) {
-	    param = line.substr(0, pos);
-	    value = line.substr(pos + 1);
-	    this->parseConfParam(param, value);
-	}
+		if (pos != std::string::npos) {
+			param = line.substr(0, pos);
+			value = line.substr(pos + 1);
+			this->parseConfParam(param, value);
+		}
     }
 
     confStream.close();
 }
 
-int Assembly::parseConfParam(const std::string &param, const std::string &value)
-{
+int Assembly::parseConfParam(const std::string &param, const std::string &value) {
     if (param == "num_steps") {
-	this->numSteps = std::stoi(value);
+		this->numSteps = std::stoi(value);
     } else if (param == "max_attachments") {
-	this->maxAttachments = std::stoi(value);
+		this->maxAttachments = std::stoi(value);
     } else if (param == "output_interval") {
-	this->outputInterval = std::stoi(value);
+		this->outputInterval = std::stoi(value);
     } else if (param == "system") {
-	this->system = value;
+		this->system = value;
     } else if (param == "output_name") {
-	this->outputName = value;
+		this->outputName = value;
     } else if (param == "output_directory") {
-	this->outputDir = value;
+		this->outputDir = value;
     } else if (param == "ensemble_size") {
-	this->ensembleSize = std::stoi(value);
+		this->ensembleSize = std::stoi(value);
     } else if (param == "sim_type") {
 	if (value == "abstract")
 	    this->simulationType = SIM_ABSTRACT;
 	else
 	    this->simulationType = SIM_KINETIC;
     } else if (param == "report_nondeterminism") {
-	if (value == "true" or value == "True") {
-	    this->reportNonDeterminism = true;
-	}
+		if (value == "true" or value == "True") {
+			this->reportNonDeterminism = true;
+		}
     } else if (param == "rng_seed") {
-	this->rngSeed = std::stoll(value);
+		this->rngSeed = std::stoll(value);
     } else if (param == "runtime_memoization") {
-	if (value == "true" or value == "True") {
-	    this->runtimeMemoization = true;
-	}
+		if (value == "true" or value == "True") {
+			this->runtimeMemoization = true;
+		}
     } else {
-	return 1;
+		return 1;
     }
 	
     return 0;
 }
 
-void Assembly::writeSystemFile(const std::string &filename)
-{
-    
+void Assembly::writeSystemFile(const std::string &filename) {
     pugi::xml_node sysNode = systemXMLDocument.child("PolyominoSystem");
     /*
     sysNode.remove_child("time");
@@ -219,9 +214,9 @@ void Assembly::parseSystemFile(const std::string &filename)
     this->Gse = sysNode.child("Gse").text().as_double(10.0);
 
     if (sysNode.child("forwardRate").empty())
-	this->kf = sysNode.child("forward_rate").text().as_double(7.88e5);
+		this->kf = sysNode.child("forward_rate").text().as_double(7.88e5);
     else
-	this->kf = sysNode.child("forwardRate").text().as_double(7.88e5);
+		this->kf = sysNode.child("forwardRate").text().as_double(7.88e5);
 
     this->bindingThreshold = sysNode.child("bindingThreshold").text().as_int(2);
     this->minBinding = sysNode.child("min_binding").text().as_int(0);
@@ -229,11 +224,12 @@ void Assembly::parseSystemFile(const std::string &filename)
 
     pugi::xml_node typesNode = sysNode.child("PolyominoTypes");
     for (pugi::xml_node typeNode : typesNode.children("PolyominoType")) {
-	this->parsePolyominoType(typeNode);
+		this->parsePolyominoType(typeNode);
     }
 
-    dimRestriction.min.z = 0;
-    dimRestriction.max.z = 2;
+	pugi::xml_node dimRestrictionsNode = sysNode.child("dim_restrictions");
+	std::string dimRestrictionsString = dimRestrictionsNode.text().get();
+	this->parseDimRestrictions(dimRestrictionsString);
 	
     pugi::xml_node seedNode = sysNode.child("seed");
     pugi::xml_node psNode = seedNode.child("Polyominoes");
@@ -248,27 +244,64 @@ void Assembly::parseSystemFile(const std::string &filename)
 	Vec3 offset = this->parseCoord(coord_str);
 
 	Polyomino polyomino(polyominoType, offset);
-	this->seedPolyominoes.insert(polyomino);
+		this->seedPolyominoes.insert(polyomino);
     }
 
     pugi::xml_node assemblyNode = sysNode.child("assembly");
     pugi::xml_node paNode = assemblyNode.child("Polyominoes");
     for (pugi::xml_node polyNode : paNode.children("Polyomino")) {
-		
-	std::string name = polyNode.child("PolyominoType").text().get();
-	if (this->polyominoTypesByName.count(name) == 0)
-	    throw std::runtime_error("no polyomino type with name: " + name);
-	PolyominoType *polyominoType = this->polyominoTypesByName[name];
-		
-	const char *coord_str = polyNode.child("translation").text().get();
-	Vec3 offset = this->parseCoord(coord_str);
 
-	Polyomino polyomino(polyominoType, offset);
-	if (!seedPolyominoes.count(polyomino))
-	{
-	    this->assemblyPolyominoes.insert(polyomino);
-	}
+		std::string name = polyNode.child("PolyominoType").text().get();
+		if (this->polyominoTypesByName.count(name) == 0)
+			throw std::runtime_error("no polyomino type with name: " + name);
+		PolyominoType *polyominoType = this->polyominoTypesByName[name];
+			
+		const char *coord_str = polyNode.child("translation").text().get();
+		Vec3 offset = this->parseCoord(coord_str);
+
+		Polyomino polyomino(polyominoType, offset);
+		if (!seedPolyominoes.count(polyomino))
+		{
+			this->assemblyPolyominoes.insert(polyomino);
+		}
     }
+}
+
+void Assembly::parseDimRestrictions(const std::string &s) {
+	const std::regex dimRegex("\\(\\s*(None|\\[(\\-?\\d+),\\s*(\\-?\\d+)\\])\\s*,\\s*(None|\\[(\\-?\\d+),\\s*(\\-?\\d+)\\])\\s*,\\s*(None|\\[(\\-?\\d+),\\s*(\\-?\\d+)\\])\\s*\\)");
+	
+	std::smatch match;
+
+	// TODO: perform validation on numbers
+	if (std::regex_match(s, match, dimRegex)) {
+		if (match[1].str() != "None") {
+			try {
+				this->dimRestriction.min.x = std::stoi(match[2].str());
+				this->dimRestriction.max.x = std::stoi(match[3].str());
+			} catch (std::exception err) {
+				std::cout << "failed to read dim_restrictions x: " << match[1].str() << std::endl;
+			}
+		}
+		if (match[4].str() != "None") {
+			try {
+				this->dimRestriction.min.y = std::stoi(match[5].str());
+				this->dimRestriction.max.y = std::stoi(match[6].str());
+			} catch (std::exception err) {
+				std::cout << "failed to read dim_restrictions y: " << match[4].str() << std::endl;
+			}
+		}
+		if (match[7].str() != "None") {
+			try {
+				this->dimRestriction.min.z = std::stoi(match[8].str());
+				this->dimRestriction.max.z = std::stoi(match[9].str());
+			} catch (std::exception err) {
+				std::cout << "failed to read dim_restrictions z: " << match[4].str() << std::endl;
+			}
+		}
+
+		std::cout << this->dimRestriction.min.toString() << std::endl;
+		std::cout << this->dimRestriction.max.toString() << std::endl;
+	}
 }
 
 void Assembly::parsePolyominoType(pugi::xml_node typeNode)
@@ -280,30 +313,30 @@ void Assembly::parsePolyominoType(pugi::xml_node typeNode)
 
     pugi::xml_node blocksNode = typeNode.child("blocks");
     for (pugi::xml_node blockNode : blocksNode.children("block")) {
-	Block block;
-		
-	const char *coord_str = blockNode.child("coords").text().get();
-	block.coord = this->parseCoord(coord_str);
-
-	pugi::xml_node domainsNode = blockNode.child("domains");
-	for (pugi::xml_node domainNode : domainsNode.children("domain")) {
-	    Domain domain;
+		Block block;
 			
-	    domain.label = domainNode.child("label").text().as_string();
-	    domain.strength = domainNode.child("strength").text().as_int(1);
+		const char *coord_str = blockNode.child("coords").text().get();
+		block.coord = this->parseCoord(coord_str);
 
-	    const char *dir_str = domainNode.child("direction").text().get();
-	    domain.direction = this->parseDirection(dir_str);
+		pugi::xml_node domainsNode = blockNode.child("domains");
+		for (pugi::xml_node domainNode : domainsNode.children("domain")) {
+			Domain domain;
+				
+			domain.label = domainNode.child("label").text().as_string();
+			domain.strength = domainNode.child("strength").text().as_int(1);
 
-	    block.domains.push_back(domain);
-	}
-	type->blocks.push_back(block);
+			const char *dir_str = domainNode.child("direction").text().get();
+			domain.direction = this->parseDirection(dir_str);
+
+			block.domains.push_back(domain);
+		}
+		type->blocks.push_back(block);
     }
 
     type->id = this->polyominoTypes.size();
     this->polyominoTypes.push_back(type);
     if (this->polyominoTypesByName.count(type->name))
-	throw std::runtime_error("duplicate polyomino type name: " + type->name);
+		throw std::runtime_error("duplicate polyomino type name: " + type->name);
 	
     this->polyominoTypesByName[type->name] = type;
 }
@@ -312,12 +345,12 @@ Vec3 Assembly::parseCoord(const char *coord_str)
 {
     Vec3 coord;
     if (sscanf(coord_str, "(%d,%d,%d)", &coord.x, &coord.y, &coord.z) == 3) {
-	return coord;
+		return coord;
     } else if (sscanf(coord_str, "(%d,%d)", &coord.x, &coord.y) == 2) {
-	coord.z = 0;
-	return coord;
+		coord.z = 0;
+		return coord;
     } else {
-	throw std::runtime_error(std::string("invalid coord string: ")+coord_str);
+		throw std::runtime_error(std::string("invalid coord string: ")+coord_str);
     }
 }
 
