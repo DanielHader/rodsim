@@ -4,7 +4,7 @@ Author: Daniel Hader
 
 Last Updated: 23 Jun 2025
 
-RodSim is software for performing simulations of the [abstract Slat Assembly Model](http://self-assembly.net/wiki/index.php?title=Abstract_Slat_Assembly_Model_(aSAM)) and the kinetic Slat Assembly Model (http://self-assembly.net/wiki/index.php?title=Kinetic_Slat_Assembly_Model_(kSAM)).
+RodSim is software for performing simulations of the [abstract Slat Assembly Model](http://self-assembly.net/wiki/index.php?title=Abstract_Slat_Assembly_Model_(aSAM)) and the [kinetic Slat Assembly Model](http://self-assembly.net/wiki/index.php?title=Kinetic_Slat_Assembly_Model_(kSAM)).
 
 ## Building
 
